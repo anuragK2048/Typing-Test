@@ -1,63 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 import "./styles/main.css";
 
-// const original = [
+// const expected = [
 //   {
 //     displayChar: "a",
 //     inputChar: "",
-//     className2: "unvisited",
+//     style: "unvisited",
 //     cursor: true,
-//   },
-//   {
-//     displayChar: "b",
-//     inputChar: "",
-//     className2: "unvisited",
-//     cursor: false,
-//   },
-//   {
-//     displayChar: "c",
-//     inputChar: "",
-//     className2: "unvisited",
-//     cursor: false,
-//   },
-//   {
-//     displayChar: " ",
-//     inputChar: "",
-//     className2: "unvisited",
-//     cursor: false,
-//   },
-//   {
-//     displayChar: "a",
-//     inputChar: "",
-//     className2: "unvisited",
-//     cursor: false,
-//   },
-//   {
-//     displayChar: "k",
-//     inputChar: "",
-//     className2: "unvisited",
-//     cursor: false,
-//   },
-//   {
-//     displayChar: " ",
-//     inputChar: "",
-//     className2: "unvisited",
-//     cursor: false,
-//   },
-//   {
-//     displayChar: "c",
-//     inputChar: "",
-//     className2: "unvisited",
-//     cursor: false,
-//   },
-//   {
-//     displayChar: "a",
-//     inputChar: "",
-//     className2: "unvisited",
-//     cursor: false,
 //   },
 // ];
 
@@ -136,76 +86,88 @@ function generateRandomSentence() {
   return sentence.trim();
 }
 
-// console.log(generateRandomSentence());
-
-// const temp = generateRandomSentence().split("");
-// const original = temp.map((char, i) => {
-//   const cursor = i === 0 ? true : false;
-//   return { displayChar: char, inputChar: "", className2: "unvisited", cursor };
-// });
-
 function App() {
-  const [original, setOriginal] = useState([]);
-  const [userInputText, setUserInputText] = useState("");
-  const [input, setInput] = useState([]);
-  const [display, setDisplay] = useState(original);
+  const [expected, setExpected] = useState([]); // this is answer
+  const [userInputStr, setUserInputStr] = useState(""); // to take user input in string
+  const [userInput, setUserInput] = useState([]); // to convert user input to array
+  const [display, setDisplay] = useState(expected); // this would be directly displayed
+  const [stats, setStats] = useState({
+    wordspMin: 0,
+    charspMin: 0,
+    accuracy: 0,
+  });
 
   const inputRef = useRef();
 
+  // to initially load expected array
   useEffect(() => {
-    const temp = generateRandomSentence().split("");
-    const og = temp.map((char, i) => {
-      const cursor = i === 0 ? true : false;
-      return {
-        displayChar: char,
-        inputChar: "",
-        className2: "unvisited",
-        cursor,
-      };
-    });
-    setOriginal(og);
-    setDisplay(og);
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+    const temp = generateRandomSentence()
+      .split("")
+      .map((char, i) => {
+        const cursorVal = i === 0 ? true : false;
+        return {
+          displayChar: char,
+          inputChar: "",
+          style: "unvisited",
+          cursor: cursorVal,
+        };
+      });
+    setExpected(temp);
+    setDisplay(temp);
+    inputRef.current?.focus();
   }, []);
 
+  // to compare userInput with expected array
   useEffect(() => {
-    display.forEach((val, i) => {
-      if (i < input.length) {
-        setDisplay((cur) => {
-          const temp = [...cur];
-          const classN = temp[i].displayChar === input[i] ? "green" : "red";
-          // const cursorValue = i + 1 === input.length ? true : false;
-          temp[i] = {
-            ...temp[i],
-            inputChar: input[i],
-            className2: classN,
-            cursor: false,
-          };
-          return temp;
+    if (expected[0] !== undefined) {
+      setDisplay((cur) => {
+        return cur.map((val, i) => {
+          if (i < userInput.length) {
+            return {
+              ...val,
+              inputChar: userInput[i],
+              cursor: false,
+              style: val.displayChar === userInput[i] ? "green" : "red",
+            };
+          }
+          if (i === userInput.length) {
+            return { ...expected[i], cursor: true };
+          }
+          return expected[i];
         });
-      } else {
-        if (i === input.length) {
-          setDisplay((cur) => {
-            const temp = [...cur];
-            temp[i] = { ...original[i], cursor: true };
-            return temp;
-          });
-        } else {
-          setDisplay((cur) => {
-            const temp = [...cur];
-            temp[i] = original[i];
-            return temp;
-          });
-        }
-      }
+      });
+    }
+  }, [userInput, expected]);
+
+  // to calculate stats according to display  (words/min, char/min, accuracy)
+  useEffect(() => {
+    let totalWord = 0;
+    // let correctWord = 0;
+    let totalChar = 0;
+    let correctChar = 0;
+    for (let i = 0; i < display.length; i++) {
+      const charDetails = display[i];
+      console.log(i);
+      if (display[i].inputChar === "") {
+        console.log("stat for loop breaked");
+        break;
+      } // break if input char doesnt exist
+      totalChar++;
+      if (charDetails.displayChar === charDetails.inputChar) correctChar++;
+
+      if (charDetails.inputChar === " ") totalWord++;
+    }
+    setStats({
+      wordspMin: totalWord,
+      charspMin: totalChar,
+      accuracy: (correctChar / totalChar) * 100, // calculating accuracy on the basis of correct characters
     });
-  }, [input]);
+  }, [display]);
 
   function handleTextInput(e) {
-    setUserInputText(e.target.value);
-    setInput(e.target.value.split(""));
+    const inputValue = e.target.value;
+    setUserInputStr(inputValue);
+    setUserInput(inputValue.split(""));
   }
 
   return (
@@ -214,7 +176,7 @@ function App() {
       <div className="relative">
         <input
           type="text"
-          value={userInputText}
+          value={userInputStr}
           onChange={handleTextInput}
           className="relative border-2 border-amber-200 z-20 w-full"
           style={{ opacity: "0" }}
@@ -225,22 +187,38 @@ function App() {
           <div className="flex flex-wrap">
             {display.map((charDetails, i) => (
               <div className="flex relative" key={i}>
-                {charDetails.cursor ? (
-                  <div className="h-auto w-0.25 bg-white animate-blink"></div>
+                {charDetails?.cursor ? (
+                  <div className="h-auto w-0.25 bg-white animate-blink opacity-0"></div>
                 ) : (
                   <div className="h-auto w-0.25"></div>
                 )}
-                <span className={`${charDetails.className2}`}>
-                  {charDetails.inputChar != ""
-                    ? charDetails.inputChar === " "
+                <span className={`${charDetails?.style}`}>
+                  {charDetails?.inputChar != ""
+                    ? charDetails?.inputChar === " "
                       ? "\u00A0"
-                      : charDetails.displayChar
-                    : charDetails.displayChar === " "
+                      : charDetails?.inputChar
+                    : charDetails?.displayChar === " "
                     ? "\u00A0"
-                    : charDetails.displayChar}
+                    : charDetails?.displayChar}
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+      <div className="stats mt-40 flex gap-20 justify-center">
+        <div className="flex">
+          <div className="text-amber-200">Words/Min :</div>
+          <div className="ml-1">{stats.wordspMin}</div>
+        </div>
+        <div className="flex">
+          <div className="text-amber-200">Chars/Min :</div>
+          <div className="ml-1">{stats.charspMin}</div>
+        </div>
+        <div className="flex">
+          <div className="text-amber-200">Accuracy :</div>
+          <div className="ml-1">
+            {stats.accuracy ? Math.round(stats.accuracy) : 0}%
           </div>
         </div>
       </div>
