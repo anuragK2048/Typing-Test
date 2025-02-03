@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
@@ -124,7 +124,7 @@ function generateRandomSentence() {
   ];
 
   let sentence = "";
-  while (sentence.split(" ").length < 20) {
+  while (sentence.split(" ").length < 50) {
     sentence +=
       `${subjects[Math.floor(Math.random() * subjects.length)]} ` +
       `${verbs[Math.floor(Math.random() * verbs.length)]} ` +
@@ -150,6 +150,8 @@ function App() {
   const [input, setInput] = useState([]);
   const [display, setDisplay] = useState(original);
 
+  const inputRef = useRef();
+
   useEffect(() => {
     const temp = generateRandomSentence().split("");
     const og = temp.map((char, i) => {
@@ -163,6 +165,9 @@ function App() {
     });
     setOriginal(og);
     setDisplay(og);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   }, []);
 
   useEffect(() => {
@@ -205,34 +210,38 @@ function App() {
 
   return (
     <>
-      <div className="relative overflow-auto">
+      <div className="mb-5 self-start">Start Typing</div>
+      <div className="relative">
         <input
           type="text"
           value={userInputText}
           onChange={handleTextInput}
-          className="relative border-2 border-amber-200 z-20"
+          className="relative border-2 border-amber-200 z-20 w-full"
           style={{ opacity: "0" }}
+          ref={inputRef}
         />
         <div className="absolute top-0 left-1 z-10 flex">
           {/* {console.log(display)} */}
-          {display.map((charDetails, i) => (
-            <div className="flex relative" key={i}>
-              {charDetails.cursor ? (
-                <div className="h-auto w-0.25 bg-white animate-blink"></div>
-              ) : (
-                <div className="h-auto w-0.25"></div>
-              )}
-              <span className={`${charDetails.className2}`}>
-                {charDetails.inputChar != ""
-                  ? charDetails.inputChar === " "
+          <div className="flex flex-wrap">
+            {display.map((charDetails, i) => (
+              <div className="flex relative" key={i}>
+                {charDetails.cursor ? (
+                  <div className="h-auto w-0.25 bg-white animate-blink"></div>
+                ) : (
+                  <div className="h-auto w-0.25"></div>
+                )}
+                <span className={`${charDetails.className2}`}>
+                  {charDetails.inputChar != ""
+                    ? charDetails.inputChar === " "
+                      ? "\u00A0"
+                      : charDetails.displayChar
+                    : charDetails.displayChar === " "
                     ? "\u00A0"
-                    : charDetails.displayChar
-                  : charDetails.displayChar === " "
-                  ? "\u00A0"
-                  : charDetails.displayChar}
-              </span>
-            </div>
-          ))}
+                    : charDetails.displayChar}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </>
