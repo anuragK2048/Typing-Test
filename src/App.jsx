@@ -114,7 +114,8 @@ function App() {
 
   // establishing webSocket connection
   useEffect(() => {
-    const ws = new WebSocket("ws://192.168.91.243:8080");
+    const ws = new WebSocket("ws://localhost:8080");
+    // const ws = new WebSocket("ws://192.168.91.243:8080");
     ws.onopen = () => {
       console.log("connected to server");
     };
